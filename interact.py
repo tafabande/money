@@ -14,8 +14,6 @@ def get_data():
     return data
 
 
-
-
 def main():
     choice = input("Would you like to UPDATE or check BALANCE?:.... ").upper()
 

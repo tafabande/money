@@ -1,14 +1,7 @@
 from sqlmodel import SQLModel, create_engine,Session,select
 from databas import Deposit
 
-
-
-
-
-
-
 File_path = "files/dbs.db"
-
 
 engine = create_engine(f"sqlite:///{File_path}", echo = True)
 SQLModel.metadata.create_all(engine)
