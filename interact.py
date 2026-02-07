@@ -7,7 +7,7 @@ def get_data():
     """code to get data to input into the Excel file"""
     get_amount = int(input("Enter amount ... "))
     get_reason = input("What is it for...")
-    get_depositor = input("What is it for...")
+    get_depositor = input("Who is it from...")
     get_date = date.today()
 
     data = [get_date,get_amount,get_depositor,get_reason ]
@@ -19,7 +19,7 @@ def main():
 
     if choice == "UPDATE":
         updatedb(get_data())
-        print(f"update for{datetime.now}has been completed successfully")
+        print(f"update for {datetime.now()} has been completed successfully")
     elif choice == "BALANCE":
         statement = dbstatement()
         for key,value in statement.items():

@@ -1,5 +1,5 @@
-from interact import get_data
-from datetime import datetime
+# from interact import get_data
+
 import os
 import pandas as pd
 
@@ -15,11 +15,9 @@ def file():
     df = pd.read_excel(Filepath)
     return df
 
-def update():
-    data = get_data()
-    old_df = file()
-    df = pd.concat([old_df,data])
-    df.to_excel(Filepath,index=False)
+def update(data):
+    from databas_logic import updatedb
+    updatedb(data)
 
    
    
