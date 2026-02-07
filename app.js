@@ -19,7 +19,6 @@ const updateSassyComment = (total) => {
     waitUntilVisible: true,
   }).go();
 };
-
 const renderGraphs = () => {
   const chartCanvas = document.getElementById('progressChart');
   if (!chartCanvas) return;
