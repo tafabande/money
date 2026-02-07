@@ -11,5 +11,18 @@ const firebaseConfig = {
 };
 
 // Use the firebase object provided by the scripts in index.html
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+var db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  // Enable offline persistence for better reliability
+  db.enablePersistence().catch((err) => {
+      if (err.code == 'failed-precondition') {
+          console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+      } else if (err.code == 'unimplemented') {
+          console.warn("The current browser does not support all of the features required to enable persistence");
+      }
+  });
+} catch (e) {
+  console.error("Firebase initialization failed:", e);
+}

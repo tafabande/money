@@ -349,8 +349,10 @@ const handleDeposit = async (event) => {
     event.target.reset();
     if (whenInput) whenInput.valueAsDate = new Date();
     if (whoInput) whoInput.value = activePartner;
+    alert("Deposit successful!");
   } catch (error) {
     console.error("Error updating deposit:", error);
+    alert("Error updating deposit: " + error.message);
   }
 };
 
@@ -372,16 +374,18 @@ const handleAddGoal = async (event) => {
     return;
   }
 
-  try {
-    await db.collection("goals").doc(name).set({
-      name,
-      target,
-      saved: 0
-    });
-    event.target.reset();
-  } catch (error) {
-    console.error("Error adding goal:", error);
-  }
+    try {
+      await db.collection("goals").doc(name).set({
+        name,
+        target,
+        saved: 0
+      });
+      event.target.reset();
+      alert(`Goal "${name}" added successfully!`);
+    } catch (error) {
+      console.error("Error adding goal:", error);
+      alert("Error adding goal: " + error.message);
+    }
 };
 
 window.completeGoal = async (goalName, amount) => {
@@ -462,31 +466,36 @@ const syncData = () => {
     const fetchedMap = new Map(fetched.map(g => [g.name, g]));
 
     // 1. Process Static Goals (force hardcoded targets)
-    const combinedGoals = Object.entries(STATIC_GOALS).map(([name, target]) => {
+    const combinedGoals = [];
+    
+    // Use a Promise.all to ensure all set operations finish before we finish initialization
+    // though for onSnapshot it doesn't strictly matter as it will fire again.
+    const staticGoalPromises = Object.entries(STATIC_GOALS).map(([name, target]) => {
       const f = fetchedMap.get(name);
       if (!f) {
         // Missing in DB, create it
-        db.collection("goals").doc(name).set({ name, target, saved: 0 });
-        return { name, target, saved: 0 };
+        return db.collection("goals").doc(name).set({ name, target, saved: 0 }).then(() => ({ name, target, saved: 0 }));
       } else {
         // Exists in DB, force target if it differs
         if (f.target !== target) {
           db.collection("goals").doc(name).update({ target });
         }
-        return { ...f, target };
+        return Promise.resolve({ ...f, target });
       }
     });
 
-    // 2. Add other non-static goals from DB
-    fetched.forEach(g => {
-      if (!STATIC_GOALS.hasOwnProperty(g.name)) {
-        combinedGoals.push(g);
-      }
+    Promise.all(staticGoalPromises).then(results => {
+        const combinedGoals = [...results];
+        // 2. Add other non-static goals from DB
+        fetched.forEach(g => {
+            if (!STATIC_GOALS.hasOwnProperty(g.name)) {
+                combinedGoals.push(g);
+            }
+        });
+        goals = combinedGoals;
+        renderGoals();
+        updateTotals();
     });
-
-    goals = combinedGoals;
-    renderGoals();
-    updateTotals();
   });
 
   // Sync Activities
