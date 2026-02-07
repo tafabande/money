@@ -10,5 +10,6 @@ const firebaseConfig = {
   measurementId: "G-Z7JJ66FSSQ"
 };
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// Use the firebase object provided by the scripts in index.html
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();

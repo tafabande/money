@@ -178,7 +178,7 @@ const initFirebase = () => {
   return firebase.firestore(app);
 };
 
-const db = initFirebase();
+// const db = initFirebase(); // Removed to avoid double initialization
 
 const updateFooterStats = () => {
     const completed = goals.filter(g => g.target > 0 && g.saved >= g.target && g.name !== 'Other').length;
@@ -448,10 +448,16 @@ window.completeGoal = async (goalName, amount) => {
 };
 
 const syncData = () => {
-  if (!db) return;
+  if (!db) {
+    console.error("syncData called but db is not available");
+    return;
+  }
 
   // Sync Goals
   db.collection("goals").onSnapshot((snapshot) => {
+    if (snapshot.empty) {
+      console.warn("Goals collection is empty in Firestore. Initializing static goals...");
+    }
     const fetched = snapshot.docs.map(doc => doc.data());
     const fetchedMap = new Map(fetched.map(g => [g.name, g]));
 
@@ -485,16 +491,16 @@ const syncData = () => {
 
   // Sync Activities
   db.collection("activities").orderBy("timestamp", "asc").onSnapshot((snapshot) => {
+    if (snapshot.empty) {
+      console.warn("Activities collection is empty in Firestore.");
+    }
     activities = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
     }));
-    // Filter activities that might have null timestamp (briefly during local update)
-    const validActivities = activities.filter(a => a.timestamp);
-    if (validActivities.length > 0) {
-        renderActivity();
-        renderGraphs(); 
-    }
+    // Always render activity and graphs even if validActivities is empty (to clear them)
+    renderActivity();
+    renderGraphs(); 
     
     // Trigger local sync
     syncToLocal(goals, activities);
@@ -589,8 +595,15 @@ const initHearts = () => {
   }
 };
 
-syncData();
-renderGoals();
-updatePartnerTag();
-initTypeIt();
-initHearts();
+// syncData(); // Moved initialization check to window.onload to ensure Firebase is ready
+window.onload = () => {
+  if (db) {
+    syncData();
+  } else {
+    console.error("Firestore 'db' not initialized. Check your config.js and network.");
+  }
+  renderGoals();
+  updatePartnerTag();
+  initTypeIt();
+  initHearts();
+};
