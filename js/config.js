@@ -12,17 +12,27 @@ const firebaseConfig = {
 
 // Use the firebase object provided by the scripts in index.html
 var db;
+// indicate whether persistence is available (fallbacks will use localStorage)
+window.persistenceAvailable = false;
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.firestore();
   // Enable offline persistence for better reliability
-  db.enablePersistence().catch((err) => {
-      if (err.code == 'failed-precondition') {
-          console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-      } else if (err.code == 'unimplemented') {
-          console.warn("The current browser does not support all of the features required to enable persistence");
+  db.enablePersistence().then(() => {
+      window.persistenceAvailable = true;
+      console.info("Firestore persistence enabled: data will survive browser restarts when possible.");
+  }).catch((err) => {
+      // Set flag and provide helpful messages
+      window.persistenceAvailable = false;
+      if (err.code === 'failed-precondition') {
+          console.warn("Firestore persistence failed: multiple tabs open. Persistence only works in one tab at a time.");
+      } else if (err.code === 'unimplemented') {
+          console.warn("Firestore persistence is not available in this browser (private mode or unsupported browser). Falling back to in-memory / localStorage fallback.");
+      } else {
+          console.warn("Firestore persistence could not be enabled:", err);
       }
   });
 } catch (e) {
   console.error("Firebase initialization failed:", e);
+  window.persistenceAvailable = false;
 }

@@ -1,5 +1,4 @@
 let chart;
-let sassyTypeIt;
 
 const updateSassyComment = (total) => {
   const totalTarget = goals.reduce((sum, goal) => sum + (goal.name !== 'Other' ? goal.target : 0), 0);
@@ -144,7 +143,6 @@ const activityFeed = document.getElementById("activity-feed");
 const goalList = document.getElementById("goal-list");
 const totalBalance = document.getElementById("total-balance");
 const celebrate = document.getElementById("celebrate");
-const heroTitle = document.getElementById("hero-title");
 const goalSelect = document.getElementById("goal-select");
 const whoInput = document.getElementById("who-input");
 const whenInput = document.getElementById("when-input");
@@ -454,6 +452,8 @@ window.completeGoal = async (goalName, amount) => {
 const syncData = () => {
   if (!db) {
     console.error("syncData called but db is not available");
+    // Load from localStorage fallback
+    loadFromLocal();
     return;
   }
 
@@ -466,10 +466,6 @@ const syncData = () => {
     const fetchedMap = new Map(fetched.map(g => [g.name, g]));
 
     // 1. Process Static Goals (force hardcoded targets)
-    const combinedGoals = [];
-    
-    // Use a Promise.all to ensure all set operations finish before we finish initialization
-    // though for onSnapshot it doesn't strictly matter as it will fire again.
     const staticGoalPromises = Object.entries(STATIC_GOALS).map(([name, target]) => {
       const f = fetchedMap.get(name);
       if (!f) {
@@ -495,6 +491,11 @@ const syncData = () => {
         goals = combinedGoals;
         renderGoals();
         updateTotals();
+
+        // persist locally as a fallback
+        saveToLocal(goals, activities);
+    }).catch(e => {
+        console.warn('Error processing static goals snapshot:', e);
     });
   });
 
@@ -513,8 +514,72 @@ const syncData = () => {
     
     // Trigger local sync
     syncToLocal(goals, activities);
+
+    // persist locally as a fallback
+    saveToLocal(goals, activities);
   });
 };
+
+// Local persistence fallback using localStorage
+const LOCAL_STORAGE_KEY = 'couple_goals_vault_v1';
+
+const saveToLocal = (goalsToSave, activitiesToSave) => {
+  try {
+    const payload = {
+      goals: goalsToSave,
+      activities: activitiesToSave.map(a => ({ ...a, timestamp: a.timestamp && a.timestamp.toMillis ? a.timestamp.toMillis() : (a.timestamp && a.timestamp.seconds ? a.timestamp.seconds * 1000 : null) }))
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    console.log('Saved state to localStorage');
+  } catch (e) {
+    console.warn('Failed to save to localStorage:', e);
+  }
+};
+
+const loadFromLocal = () => {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (parsed.goals) {
+      goals = parsed.goals;
+    }
+    if (parsed.activities) {
+      activities = parsed.activities.map(a => {
+        const tsMillis = a.timestamp;
+        if (tsMillis == null) return { ...a, timestamp: null };
+        if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.Timestamp) {
+          return { ...a, timestamp: firebase.firestore.Timestamp.fromMillis(tsMillis) };
+        } else {
+          // Minimal shim that provides the methods used by the app
+          return { ...a, timestamp: {
+            toMillis: () => tsMillis,
+            toDate: () => new Date(tsMillis)
+          } };
+        }
+      });
+    }
+
+    renderActivity();
+    renderGoals();
+    updateTotals();
+    renderGraphs();
+    console.log('Loaded state from localStorage');
+    return true;
+  } catch (e) {
+    console.warn('Failed to load from localStorage:', e);
+    return false;
+  }
+};
+
+// When Firestore isn't available (or persistence disabled) attempt to load from localStorage on startup
+window.addEventListener('load', () => {
+  // If persistence is disabled or db didn't initialize, load fallback
+  if (typeof window.persistenceAvailable !== 'undefined' && !window.persistenceAvailable) {
+    console.info('Firestore persistence not available - attempting localStorage fallback.');
+    loadFromLocal();
+  }
+});
 
 const syncToLocal = async (goals, activities) => {
   try {
@@ -526,6 +591,8 @@ const syncToLocal = async (goals, activities) => {
     console.log("Local sync successful");
   } catch (e) {
     console.warn("Local sync failed:", e);
+    // also save to localStorage as a fallback
+    saveToLocal(goals, activities);
   }
 };
 
@@ -610,6 +677,8 @@ window.onload = () => {
     syncData();
   } else {
     console.error("Firestore 'db' not initialized. Check your config.js and network.");
+    // Attempt to load from localStorage fallback
+    loadFromLocal();
   }
   renderGoals();
   updatePartnerTag();
