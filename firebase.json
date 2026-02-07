@@ -1,0 +1,22 @@
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "africa-south1",
+    "rules": "firestone.rules",
+    "indexes": "firestone.index"
+  },
+  "hosting": {
+    "site": "money-1bc2d-5396c",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "public/**",
+      "publicc/**",
+      "*.py",
+      "files/**",
+      "libs/**/.*"
+    ]
+  }
+}
