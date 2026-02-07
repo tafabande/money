@@ -14,9 +14,9 @@ const updateSassyComment = (total) => {
   commentEl.dataset.lastComment = comment;
 
   commentEl.innerHTML = "";
-  sassyTypeIt = new TypeIt("#sassy-comment", {
+  new TypeIt("#sassy-comment", {
     strings: comment,
-    speed: 50,
+    speed: 20,
     waitUntilVisible: true,
   }).go();
 };
@@ -26,32 +26,70 @@ const renderGraphs = () => {
   if (!chartCanvas) return;
   
   const ctx = chartCanvas.getContext('2d');
+  
+  // Filter out 'Other' and prepare goals for datasets
   const filteredGoals = goals.filter(g => g.name !== 'Other');
-  const labels = filteredGoals.map(g => g.name);
-  const data = filteredGoals.map(g => {
-    return g.target > 0 ? Math.min((g.saved / g.target) * 100, 100) : 0;
+  
+  // Sort activities by timestamp to ensure chronological order
+  const sortedActivities = [...activities]
+    .filter(a => a.timestamp)
+    .sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+
+  if (sortedActivities.length === 0) {
+      if (chart) {
+          chart.destroy();
+          chart = null;
+      }
+      return;
+  }
+
+  // Create labels: unique dates/times from activities
+  const labels = sortedActivities.map(a => {
+      const date = a.timestamp.toDate();
+      return date.toLocaleString(); // Show both date and time
+  });
+
+  const datasets = filteredGoals.map((goal, index) => {
+      let currentSaved = 0;
+      const dataPoints = sortedActivities.map(activity => {
+          if (activity.goal === goal.name) {
+              currentSaved += activity.amount;
+          }
+          // Also handle when goal is completed - if there was an activity for resetting the goal?
+          // completeGoal adds an activity for "Other" with negative amount, and resets goal saved to 0.
+          // The reset to 0 isn't captured in an activity!
+          // We need to fix that or handle it.
+          
+          return goal.target > 0 ? Math.min(Math.max((currentSaved / goal.target) * 100, 0), 100) : 0;
+      });
+
+      const colors = [
+          '#7b4dff', '#ff4fb0', '#4facfe', '#00f2fe', '#f093fb', '#f5576c'
+      ];
+      const color = colors[index % colors.length];
+
+      return {
+          label: goal.name,
+          data: dataPoints,
+          borderColor: color,
+          backgroundColor: color + '33', // 20% opacity
+          fill: false,
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6
+      };
   });
 
   if (chart) {
     chart.data.labels = labels;
-    chart.data.datasets[0].data = data;
+    chart.data.datasets = datasets;
     chart.update();
   } else {
     chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
-        datasets: [{
-          label: 'Progress (%)',
-          data: data,
-          borderColor: '#7b4dff',
-          backgroundColor: 'rgba(123, 77, 255, 0.2)',
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#ff4fb0',
-          pointBorderColor: '#fff',
-          pointHoverRadius: 8
-        }]
+        datasets: datasets
       },
       options: {
         responsive: true,
@@ -60,14 +98,33 @@ const renderGraphs = () => {
           y: {
             beginAtZero: true,
             max: 100,
+            title: {
+                display: true,
+                text: 'Progress (%)'
+            },
             ticks: {
               callback: (value) => value + '%'
             }
+          },
+          x: {
+              title: {
+                  display: true,
+                  text: 'Timeline'
+              }
           }
         },
         plugins: {
           legend: {
-            display: false
+            display: true,
+            position: 'top',
+            labels: {
+                usePointStyle: true,
+                padding: 20
+            }
+          },
+          tooltip: {
+              mode: 'index',
+              intersect: false
           }
         }
       }
@@ -208,7 +265,12 @@ const renderGoals = () => {
 
 const renderActivity = () => {
   if (activityFeed) activityFeed.innerHTML = "";
-  activities.forEach((activity) => {
+  // Sort descending for display in feed
+  const displayActivities = [...activities].sort((a, b) => {
+      if (!a.timestamp || !b.timestamp) return 0;
+      return b.timestamp.toMillis() - a.timestamp.toMillis();
+  });
+  displayActivities.forEach((activity) => {
     const item = document.createElement("div");
     item.className = "activity-item";
     const prefix = activity.amount < 0 ? "📉" : "✨";
@@ -257,7 +319,18 @@ const handleDeposit = async (event) => {
   if (!goal) return;
 
   try {
-    // Update goal in Firestore
+    // 1. Send data to local server (if available)
+    try {
+      await fetch('/api/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, goal: goalName, note, who, when })
+      });
+    } catch (e) {
+      console.warn("Local database update failed or not available:", e);
+    }
+
+    // 2. Update goal in Firestore
     const goalRef = db.collection("goals").doc(goalName);
     await goalRef.update({
       saved: firebase.firestore.FieldValue.increment(amount)
@@ -316,6 +389,23 @@ window.completeGoal = async (goalName, amount) => {
   if (!confirm(`Complete ${goalName} and deduct ${formatMoney(amount)} from Other?`)) return;
 
   try {
+    // 0. Send to local database
+    try {
+      await fetch('/api/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          amount: -amount, 
+          goal: "Other", 
+          note: `Completed ${goalName}`, 
+          who: activePartner, 
+          when: new Date().toISOString().split('T')[0] 
+        })
+      });
+    } catch (e) {
+      console.warn("Local database update failed or not available:", e);
+    }
+
     // 1. Deduct from Other
     const otherRef = db.collection("goals").doc("Other");
     const otherDoc = await otherRef.get();
@@ -339,6 +429,15 @@ window.completeGoal = async (goalName, amount) => {
     // 3. Reset the goal's saved amount to 0
     await db.collection("goals").doc(goalName).update({
         saved: 0
+    });
+
+    // 4. Add activity for reset
+    await db.collection("activities").add({
+      amount: -amount,
+      note: `Reset ${goalName} after completion`,
+      goal: goalName,
+      partner: activePartner,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     alert(`${goalName} completed! ${formatMoney(amount)} deducted from Other.`);
@@ -385,10 +484,34 @@ const syncData = () => {
   });
 
   // Sync Activities
-  db.collection("activities").orderBy("timestamp", "desc").limit(10).onSnapshot((snapshot) => {
-    activities = snapshot.docs.map(doc => doc.data());
-    renderActivity();
+  db.collection("activities").orderBy("timestamp", "asc").onSnapshot((snapshot) => {
+    activities = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+    // Filter activities that might have null timestamp (briefly during local update)
+    const validActivities = activities.filter(a => a.timestamp);
+    if (validActivities.length > 0) {
+        renderActivity();
+        renderGraphs(); 
+    }
+    
+    // Trigger local sync
+    syncToLocal(goals, activities);
   });
+};
+
+const syncToLocal = async (goals, activities) => {
+  try {
+    await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ goals, activities })
+    });
+    console.log("Local sync successful");
+  } catch (e) {
+    console.warn("Local sync failed:", e);
+  }
 };
 
 const initTypeIt = () => {
@@ -402,29 +525,9 @@ const initTypeIt = () => {
   });
 
   const elementsToType = [
-    { id: "#name-taah", speed: 100, delay: 100 },
-    { id: "#name-panah", speed: 100, delay: 500 },
-    { id: "#centerpiece-sub", speed: 40, delay: 1200 },
-    { id: "#hero-eyebrow", speed: 40, delay: 1800 },
-    { id: "#hero-title", speed: 80, delay: 2400 },
-    { id: "#hero-subhead", speed: 20, delay: 3200 },
-    { id: "#label-progress", speed: 50, delay: 3800 },
-    { id: "#label-progress-sub", speed: 30, delay: 4100 },
-    { id: "#label-deposit", speed: 50, delay: 4400 },
-    { id: "#label-deposit-sub", speed: 30, delay: 4700 },
-    { id: "#label-garden", speed: 50, delay: 5000 },
-    { id: "#label-garden-sub", speed: 30, delay: 5300 },
-    { id: "#label-money", speed: 40, delay: 5600 },
-    { id: "#label-goal", speed: 40, delay: 5800 },
-    { id: "#label-who", speed: 40, delay: 6000 },
-    { id: "#label-when", speed: 40, delay: 6200 },
-    { id: "#label-note", speed: 40, delay: 6400 },
-    { id: "#btn-deposit", speed: 60, delay: 6700 },
-    { id: "#label-add-goal", speed: 50, delay: 7000 },
-    { id: "#btn-add-goal", speed: 60, delay: 7200 },
-    { id: "#label-done", speed: 40, delay: 7400 },
-    { id: "#label-growing", speed: 40, delay: 7600 },
-    { id: "#label-stacker", speed: 40, delay: 7800 },
+    { id: "#name-taah", speed: 40, delay: 0 },
+    { id: "#name-panah", speed: 40, delay: 100 },
+    { id: "#hero-title", speed: 50, delay: 300 },
   ];
 
   elementsToType.forEach(item => {
@@ -449,11 +552,11 @@ const initTypeIt = () => {
         "Stacking coins, sharing dreams. ✨",
         "Every dollar is a step closer to us. 🥂"
       ],
-      speed: 60,
+      speed: 30,
       breakLines: false,
       loop: true,
-      nextStringDelay: 3000,
-      startDelay: 7000,
+      nextStringDelay: 2000,
+      startDelay: 1000,
       waitUntilVisible: true
     }).go();
   }

@@ -8,6 +8,9 @@
   --dark: #2d1b2d;
   --bg: #fff0f3;
   --card: #ffffff;
+  --teal: #4facfe;
+  --blue: #00f2fe;
+  --yellow: #f9d423;
   --shadow: 0 20px 45px rgba(230, 57, 70, 0.15);
 }
 
@@ -285,6 +288,7 @@ h1 {
   inset: -40%;
   background: radial-gradient(circle, rgba(230, 57, 70, 0.15), transparent 60%);
   animation: glow 6s ease-in-out infinite;
+    pointer-events: none;
 }
 
 .pill {
@@ -341,6 +345,8 @@ main {
   border-radius: 32px;
   box-shadow: var(--shadow);
   display: grid;
+    position: relative;
+    z-index: 2;
   gap: 24px;
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
 }
@@ -383,6 +389,16 @@ select {
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+input,
+select {
+    background-color: #fffafb; /* soft cream, not blinding white */
+    color: #2d1b2d;            /* your --dark */
+}
+::placeholder {
+    color: #9a8fb0;
+    opacity: 1; /* Firefox is weird like that */
+}
+
 
 input:focus,
 select:focus {

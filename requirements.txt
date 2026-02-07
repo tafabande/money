@@ -1,0 +1,6 @@
+sqlmodel
+pandas
+openpyxl
+gspread
+google-auth
+

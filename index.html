@@ -39,8 +39,7 @@
           <p class="eyebrow" id="hero-eyebrow">Together we stack dreamy coins ✨</p>
           <h1 id="hero-title">Couple Goals</h1>
           <p class="subhead" id="hero-subhead">
-            A playful, vibrant dashboard where both of us can see wins, set new
-            goals, and compare how badly we are depositing money.
+            A money fun dashboard for future MBINGA'S.
           </p>
         </div>
         <div class="hero-card">
@@ -60,7 +59,7 @@
           <p class="muted" id="label-progress-sub">Watch the lines climb to the top!</p>
         </div>
         <!-- New: graph filters: toggles to show/hide goals on the chart -->
-        <div id="graph-filters" class="graph-filters" aria-label="Graph filters"></div>
+        <div id="graph-filters" class="graph-filters" aria-label="Graph filters" style="display:none;"></div>
         <div class="chart-container">
           <canvas id="progressChart"></canvas>
         </div>
@@ -95,7 +94,7 @@
               </label>
               <label id="label-when">
                 When
-                <input type="date" name="when" id="when-input" required />
+                <input type="date" name="when" id="when-input" placeholder="Select date" required />
               </label>
             </div>
             <div class="input-row">
@@ -125,7 +124,7 @@
               </label>
               <label id="label-new-target">
                 Target (USD)
-                <input type="number" name="newGoalTarget" placeholder="1000" required />
+                <input type="number" name="newGoalTarget" placeholder="e.g. 1000" required />
               </label>
               <button type="submit" class="primary" id="btn-add-goal" style="padding: 8px 12px; align-self: end; margin-bottom: 4px;">Add to Stash</button>
             </form>
