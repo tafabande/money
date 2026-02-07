@@ -79,7 +79,7 @@ const renderGoals = () => {
         <span>${goal.name}</span>
         <span>${Math.round(progress)}%</span>
       </div>
-      <div class="goal-progress"><span style="width:${progress}%"></span></div>
+      <div class="goal-progress"><span style="width: ${progress}%;"></span></div>
       <div class="goal-meta">
         <span>${formatMoney(goal.saved)} saved</span>
         <span>Goal ${formatMoney(goal.target)}</span>

@@ -22,7 +22,7 @@ To get the real-time database working, follow these steps:
     *   Copy the `firebaseConfig` object provided in the setup instructions.
 4.  **Configure `app.js`:**
     *   Open `app.js` in your editor.
-    *   Replace the placeholder `firebaseConfig` (lines 21-27) with the config you copied from Firebase.
+    *   Replace the placeholder `firebaseConfig` (lines 31-38) with the config you copied from Firebase.
     ```javascript
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
