@@ -20,19 +20,9 @@ To get the real-time database working, follow these steps:
     *   On the Project Overview page, click the **Web** icon (`</>`).
     *   Register your app (e.g., "Couple Vault").
     *   Copy the `firebaseConfig` object provided in the setup instructions.
-4.  **Configure `app.js`:**
-    *   Open `app.js` in your editor.
-    *   Replace the placeholder `firebaseConfig` (lines 31-38) with the config you copied from Firebase.
-    ```javascript
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID",
-    };
-    ```
+4.  **Configure `js/config.js`:**
+    *   Open `js/config.js` in your editor.
+    *   Replace the placeholder `firebaseConfig` with the config you copied from Firebase.
 
 ---
 
@@ -56,9 +46,13 @@ Deploying to Vercel is straightforward:
 
 ### 3. Using the App
 
-*   **Goals:** "Stand" ($10,000) and "Maroro" ($500) are preconfigured with hardcoded, static target values. They are created automatically and cannot be modified.
+*   **Inbuilt Goals:** "maroro" ($5,000), "stand" ($10,000), and "aniversary" ($5,000) are preconfigured.
+*   **Progress Tracker:** A line graph at the top tracks your progress towards completion for each goal.
+*   **Sassy Comments:** Stay motivated (or roasted) by the sassy comments that evolve for every 10% of progress you reach towards your total goals.
+*   **Useful Footer:** Track your overall success with a dynamic footer showing completed goals, active ones, and the current top contributor.
+*   **Animated UI:** Enjoy a lively experience with TypeIt.js animations across the dashboard.
 *   **Custom Goals:** Use the "Goal Garden" section to add new customized goals.
-*   **Deposits:** Select a goal and enter an amount.
+*   **Deposits:** Enter the amount, select a goal (defaults to maroro), specify who is depositing, and the date.
 *   **Deductions:** To record spending, select the **Other** goal and enter a negative amount (e.g., `-50`). Deductions are only allowed from the "Other" category.
 *   **Completion:** When a goal reaches 100%, a "Complete" button will appear. Clicking it will automatically record a deduction from the "Other" goal and reset the progress of that goal.
 *   **Timeline:** The activity feed shows the last 10 transactions in real-time.

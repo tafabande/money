@@ -1,7 +1,78 @@
-const STATIC_GOALS = {
-  "Stand": 10000,
-  "Maroro": 500,
-  "Other": 0
+let chart;
+let sassyTypeIt;
+
+const updateSassyComment = (total) => {
+  const totalTarget = goals.reduce((sum, goal) => sum + (goal.name !== 'Other' ? goal.target : 0), 0);
+  const percentage = totalTarget > 0 ? (total / totalTarget) * 100 : 0;
+  const index = Math.min(Math.floor(percentage / 10), SASSY_COMMENTS.length - 1);
+  const comment = SASSY_COMMENTS[index];
+  
+  const commentEl = document.getElementById('sassy-comment');
+  if (!commentEl) return;
+
+  if (commentEl.dataset.lastComment === comment) return;
+  commentEl.dataset.lastComment = comment;
+
+  commentEl.innerHTML = "";
+  sassyTypeIt = new TypeIt("#sassy-comment", {
+    strings: comment,
+    speed: 50,
+    waitUntilVisible: true,
+  }).go();
+};
+
+const renderGraphs = () => {
+  const chartCanvas = document.getElementById('progressChart');
+  if (!chartCanvas) return;
+  
+  const ctx = chartCanvas.getContext('2d');
+  const filteredGoals = goals.filter(g => g.name !== 'Other');
+  const labels = filteredGoals.map(g => g.name);
+  const data = filteredGoals.map(g => {
+    return g.target > 0 ? Math.min((g.saved / g.target) * 100, 100) : 0;
+  });
+
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+  } else {
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Progress (%)',
+          data: data,
+          borderColor: '#7b4dff',
+          backgroundColor: 'rgba(123, 77, 255, 0.2)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#ff4fb0',
+          pointBorderColor: '#fff',
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: (value) => value + '%'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
 };
 
 let goals = Object.entries(STATIC_GOALS).map(([name, target]) => ({
@@ -13,32 +84,29 @@ let activities = [];
 let activePartner = "Taah";
 
 const activityFeed = document.getElementById("activity-feed");
-const goalGrid = document.getElementById("goal-grid");
+const goalList = document.getElementById("goal-list");
 const totalBalance = document.getElementById("total-balance");
 const celebrate = document.getElementById("celebrate");
 const heroTitle = document.getElementById("hero-title");
 const goalSelect = document.getElementById("goal-select");
+const whoInput = document.getElementById("who-input");
+const whenInput = document.getElementById("when-input");
+
+// Set default date to today
+if (whenInput) {
+  whenInput.valueAsDate = new Date();
+}
 
 const formatMoney = (value) => `$ ${value.toLocaleString()}`;
 
 const initFirebase = () => {
-  if (typeof firebase === "undefined") {
-    console.warn("Firebase SDK not loaded.");
+  if (typeof firebase === "undefined" || typeof firebaseConfig === "undefined") {
+    console.warn("Firebase SDK or config not loaded.");
     return null;
   }
 
-  // PLACEHOLDER: User should replace this with their own config
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID",
-  };
-
   if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-    console.warn("Please configure your Firebase settings in app.js");
+    console.warn("Please configure your Firebase settings in js/config.js");
     return null;
   }
 
@@ -48,20 +116,55 @@ const initFirebase = () => {
 
 const db = initFirebase();
 
+const updateFooterStats = () => {
+    const completed = goals.filter(g => g.target > 0 && g.saved >= g.target && g.name !== 'Other').length;
+    const active = goals.filter(g => g.name !== 'Other' && (g.saved < g.target || g.target === 0)).length;
+    
+    const goalsCompletedEl = document.getElementById('footer-goals-completed');
+    const goalsActiveEl = document.getElementById('footer-goals-active');
+    const topContributorEl = document.getElementById('footer-top-contributor');
+
+    if (goalsCompletedEl) goalsCompletedEl.textContent = completed;
+    if (goalsActiveEl) goalsActiveEl.textContent = active;
+    
+    if (topContributorEl) {
+        const contributionMap = new Map();
+        activities.forEach(a => {
+            if (a.amount > 0) {
+                contributionMap.set(a.partner, (contributionMap.get(a.partner) || 0) + a.amount);
+            }
+        });
+        let topPartner = "-";
+        let maxAmount = 0;
+        contributionMap.forEach((amt, partner) => {
+            if (amt > maxAmount) {
+                maxAmount = amt;
+                topPartner = partner;
+            }
+        });
+        topContributorEl.textContent = topPartner;
+    }
+};
+
 const updateTotals = () => {
   const total = goals.reduce((sum, goal) => sum + goal.saved, 0);
   totalBalance.textContent = formatMoney(total);
+  updateSassyComment(total);
+  updateFooterStats();
 };
 
 const renderGoals = () => {
-  goalGrid.innerHTML = "";
-  goalSelect.innerHTML = '<option value="" disabled selected>Select a goal</option>';
+  goalList.innerHTML = "";
+  goalSelect.innerHTML = '<option value="" disabled>Select a goal</option>';
 
   goals.forEach((goal) => {
     // Populate select
     const option = document.createElement("option");
     option.value = goal.name;
     option.textContent = goal.name;
+    if (goal.name === "maroro") {
+      option.selected = true;
+    }
     goalSelect.appendChild(option);
 
     // Render card
@@ -86,12 +189,13 @@ const renderGoals = () => {
       </div>
       ${completionUI}
     `;
-    goalGrid.appendChild(card);
+    goalList.appendChild(card);
 
     if (progress >= 90) {
       celebrate.classList.add("active");
     }
   });
+  renderGraphs();
 };
 
 const renderActivity = () => {
@@ -99,10 +203,12 @@ const renderActivity = () => {
   activities.forEach((activity) => {
     const item = document.createElement("div");
     item.className = "activity-item";
-    const prefix = activity.amount < 0 ? "💸" : "💌";
+    const prefix = activity.amount < 0 ? "📉" : "✨";
+    const dateStr = activity.date ? new Date(activity.date).toLocaleDateString() : (activity.timestamp ? activity.timestamp.toDate().toLocaleDateString() : "");
+    
     item.innerHTML = `
-      <span>${prefix} ${activity.partner} ${activity.amount < 0 ? 'deducted' : 'added'} ${formatMoney(Math.abs(activity.amount))} ${activity.amount < 0 ? 'from' : 'to'} ${activity.goal}</span>
-      <span>${activity.note || "Love deposit"}</span>
+      <span>${prefix} <strong>${activity.partner}</strong> ${activity.amount < 0 ? 'spent' : 'added'} ${formatMoney(Math.abs(activity.amount))} for ${activity.goal}</span>
+      <span class="muted" style="font-size: 0.8rem;">${dateStr} - ${activity.note || "Saving contribution"}</span>
     `;
     activityFeed.appendChild(item);
   });
@@ -112,6 +218,9 @@ const updatePartnerTag = () => {
   document.querySelectorAll(".tag").forEach((tag) => {
     tag.classList.toggle("active", tag.dataset.partner === activePartner);
   });
+  if (whoInput) {
+    whoInput.value = activePartner;
+  }
 };
 
 const handleDeposit = async (event) => {
@@ -125,6 +234,8 @@ const handleDeposit = async (event) => {
   const amount = Number(formData.get("amount"));
   const goalName = formData.get("goal");
   const note = formData.get("note");
+  const who = formData.get("who");
+  const when = formData.get("when");
 
   if (Number.isNaN(amount)) return;
   
@@ -149,11 +260,14 @@ const handleDeposit = async (event) => {
       amount,
       note,
       goal: goalName,
-      partner: activePartner,
+      partner: who,
+      date: when,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     event.target.reset();
+    if (whenInput) whenInput.valueAsDate = new Date();
+    if (whoInput) whoInput.value = activePartner;
   } catch (error) {
     console.error("Error updating deposit:", error);
   }
@@ -270,16 +384,52 @@ const syncData = () => {
 };
 
 const initTypeIt = () => {
-  if (!heroTitle || typeof TypeIt === "undefined") return;
+  if (typeof TypeIt === "undefined") return;
 
-  new TypeIt(heroTitle, {
-    speed: 50,
-    waitUntilVisible: true,
-  })
-    .delete(5)
-    .type("Vault")
-    .pause(600)
+  // Hero Title
+  const titleEl = document.getElementById("hero-title");
+  if (titleEl) {
+    new TypeIt("#hero-title", {
+      speed: 100,
+      startDelay: 500,
+      waitUntilVisible: true
+    })
+    .empty()
+    .type("Couple Goals Vault ✨")
     .go();
+  }
+
+  // Subhead
+  const subheadEl = document.querySelector(".subhead");
+  if (subheadEl) {
+    const originalText = subheadEl.textContent;
+    subheadEl.textContent = "";
+    new TypeIt(".subhead", {
+      strings: originalText,
+      speed: 20,
+      startDelay: 1500,
+      waitUntilVisible: true
+    }).go();
+  }
+
+  // Footer Branding
+  const footerTypeItEl = document.getElementById("footer-typeit");
+  if (footerTypeItEl) {
+    new TypeIt("#footer-typeit", {
+      strings: [
+        "Building our future, one cent at a time. 🏡 💍", 
+        "Together is a wonderful place to be. ❤️", 
+        "Stacking coins, sharing dreams. ✨",
+        "Every dollar is a step closer to us. 🥂"
+      ],
+      speed: 60,
+      breakLines: false,
+      loop: true,
+      nextStringDelay: 3000,
+      startDelay: 2000,
+      waitUntilVisible: true
+    }).go();
+  }
 };
 
 document.getElementById("deposit-form").addEventListener("submit", handleDeposit);

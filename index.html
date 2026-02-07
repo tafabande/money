@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Couple Goals Vault</title>
+    <title>Couple Goals Vault ✨</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&family=Nunito:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
+    <script src="libs/chart.js"></script>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -26,10 +27,10 @@
         </div>
         <div>
           <p class="eyebrow">Together we stack dreamy coins ✨</p>
-          <h1 id="hero-title">Couple Goals Vault</h1>
+          <h1 id="hero-title">Couple Goals</h1>
           <p class="subhead">
-            A playful, vibrant dashboard where both of you can see wins, set new
-            goals, and cheer every deposit.
+            A playful, vibrant dashboard where both of us can see wins, set new
+            goals, and compare how badly we are depositing money.
           </p>
         </div>
         <div class="hero-card">
@@ -43,74 +44,119 @@
         </div>
       </header>
 
+      <section class="panel graph-section">
+        <div class="panel-header">
+          <h3>📈 Progress Tracker</h3>
+          <p class="muted">Watch the lines climb to the top!</p>
+        </div>
+        <!-- New: graph filters: toggles to show/hide goals on the chart -->
+        <div id="graph-filters" class="graph-filters" aria-label="Graph filters"></div>
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
+        <div id="sassy-comment" class="sassy-box">
+          <!-- TypeIt will animate sassy messages here for every 10% threshold per goal -->
+        </div>
+      </section>
+
       <main>
         <section class="panel">
           <div class="panel-header">
-            <h3>Make a sparkling deposit</h3>
-            <p class="muted">Pick a goal, add a cute note, and watch it glow.</p>
+            <h3>💸 Make a deposit</h3>
+            <p class="muted">Add your contribution and watch the stash grow.</p>
           </div>
           <form id="deposit-form">
             <div class="input-row">
               <label>
-                Amount
-                <input type="number" step="1" name="amount" placeholder="120" required />
+                Money (USD)
+                <input type="number" step="1" name="amount" placeholder="e.g. 50" required />
               </label>
               <label>
-                Goal
+                What it's for
                 <select name="goal" id="goal-select" required>
-                  <option value="" disabled selected>Select a goal</option>
+                  <!-- Options will be populated by JS, maroro should be default -->
                 </select>
               </label>
             </div>
+            <div class="input-row">
+              <label>
+                Who is putting it in
+                <input type="text" name="who" id="who-input" placeholder="Your name" required />
+              </label>
+              <label>
+                When
+                <input type="date" name="when" id="when-input" required />
+              </label>
+            </div>
             <label>
-              Sweet note
-              <input type="text" name="note" placeholder="Brunch date fund" />
+              Note (optional)
+              <input type="text" name="note" placeholder="What's this for?" />
             </label>
-            <button type="submit" class="primary">Drop the love</button>
+            <button type="submit" class="primary">Stack the Love ✨</button>
           </form>
           <div class="activity" id="activity-feed"></div>
         </section>
 
         <section class="panel goals">
           <div class="panel-header">
-            <h3>Goal garden</h3>
+            <h3>🌸 Goal Garden</h3>
             <p class="muted">Every goal blooms with tiny wins.</p>
           </div>
-          <div class="goal-grid" id="goal-grid"></div>
+          <div class="goal-list" id="goal-list"></div>
           <hr style="border: 0; border-top: 1px solid #eee2ff; margin: 10px 0;">
           <div class="add-goal">
-            <h4>Add a new goal</h4>
+            <h4>➕ Add a new goal</h4>
             <form id="goal-form" class="input-row" style="margin-top: 10px;">
               <label>
                 Goal Name
                 <input type="text" name="newGoalName" placeholder="e.g. Vacation" required />
               </label>
               <label>
-                Target ($)
+                Target (USD)
                 <input type="number" name="newGoalTarget" placeholder="1000" required />
               </label>
-              <button type="submit" class="primary" style="padding: 8px 12px; align-self: end; margin-bottom: 4px;">Add</button>
+              <button type="submit" class="primary" style="padding: 8px 12px; align-self: end; margin-bottom: 4px;">Add to Stash</button>
             </form>
           </div>
         </section>
       </main>
 
       <section class="panel footer">
-        <div>
-          <h3>Mini celebrations</h3>
-          <p class="muted">
-            Hit 90% on any goal and the dashboard pops with animated confetti.
-          </p>
-        </div>
-        <div class="celebrate" id="celebrate">
-          <span>🎉</span>
-          <span>💖</span>
-          <span>✨</span>
+        <div class="footer-grid">
+          <div class="footer-stats">
+            <div class="stat-card">
+              <span class="stat-icon">🏆</span>
+              <div class="stat-info">
+                <h4 id="footer-goals-completed">0</h4>
+                <p>Goals Done</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🌱</span>
+              <div class="stat-info">
+                <h4 id="footer-goals-active">0</h4>
+                <p>Growing</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🤝</span>
+              <div class="stat-info">
+                <h4 id="footer-top-contributor">-</h4>
+                <p>Top Stacker</p>
+              </div>
+            </div>
+          </div>
+          <div class="footer-branding">
+            <h3 id="footer-title">Couple Goals Vault</h3>
+            <p id="footer-typeit"></p>
+          </div>
         </div>
       </section>
     </div>
 
     <script src="libs/typeit.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/config.js"></script>
     <script src="libs/firebase-app.js"></script>
     <script src="libs/firebase-firestore.js"></script>
     <script src="app.js"></script>
