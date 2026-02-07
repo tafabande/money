@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 Filepath = 'files/money.xlsx'
-Cols = ["Date","Amount","Depositor","Reason"]
+Cols = ["Date","Amount","Depositor","Reason", "Category"]
 
 def file():
     """handles the file availability"""

@@ -8,6 +8,7 @@ class Deposit(SQLModel,table = True):
     depositor: str
     amount: float
     reason: str
+    category: str
 
 
 
