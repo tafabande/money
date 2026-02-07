@@ -34,7 +34,7 @@
         </div>
         <div class="hero-card">
           <div class="pill">Live love budget</div>
-          <h2 id="total-balance">R 0</h2>
+          <h2 id="total-balance">$ 0</h2>
           <p class="muted">Total stash balance</p>
           <div class="couple">
             <button class="tag active" data-partner="Taah">Taah</button>
@@ -53,15 +53,12 @@
             <div class="input-row">
               <label>
                 Amount
-                <input type="number" min="1" step="1" name="amount" placeholder="120" required />
+                <input type="number" step="1" name="amount" placeholder="120" required />
               </label>
               <label>
                 Goal
-                <select name="goal" required>
-                  <option value="Stand">Stand</option>
-                  <option value="Maroro">Maroro</option>
-                  <option value="Event">Event</option>
-                  <option value="Other">Other</option>
+                <select name="goal" id="goal-select" required>
+                  <option value="" disabled selected>Select a goal</option>
                 </select>
               </label>
             </div>
@@ -80,6 +77,21 @@
             <p class="muted">Every goal blooms with tiny wins.</p>
           </div>
           <div class="goal-grid" id="goal-grid"></div>
+          <hr style="border: 0; border-top: 1px solid #eee2ff; margin: 10px 0;">
+          <div class="add-goal">
+            <h4>Add a new goal</h4>
+            <form id="goal-form" class="input-row" style="margin-top: 10px;">
+              <label>
+                Goal Name
+                <input type="text" name="newGoalName" placeholder="e.g. Vacation" required />
+              </label>
+              <label>
+                Target ($)
+                <input type="number" name="newGoalTarget" placeholder="1000" required />
+              </label>
+              <button type="submit" class="primary" style="padding: 8px 12px; align-self: end; margin-bottom: 4px;">Add</button>
+            </form>
+          </div>
         </section>
       </main>
 
@@ -98,9 +110,9 @@
       </section>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/typeit@8.8.3/dist/index.umd.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="libs/typeit.js"></script>
+    <script src="libs/firebase-app.js"></script>
+    <script src="libs/firebase-firestore.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
