@@ -6,15 +6,15 @@ const STATIC_GOALS = {
 };
 
 const SASSY_COMMENTS = [
-  "Zero? We've got to start somewhere! Let's get that bread. 🍞 ✨",
-  "10% reached! A journey of a thousand miles begins with a single deposit. 👣 💵",
-  "20%! Look at us go, we're building a habit here. Stay consistent! 📈 💖",
-  "30%! We're almost a third of the way there. Time to celebrate? Maybe just a coffee. ☕ 🍩",
-  "40%! You guys are actually serious about this. I'm impressed (slightly). 😏 ✨",
-  "Halfway there! 🥳 🌈 We are officially Mbingas in training. Don't stop now!",
-  "60%! The momentum is real. Our future selves are doing a happy dance. 💃 🕺",
-  "70%! We're in the home stretch! Can you smell the success? 👃 💸",
-  "80%! Almost there! Just a few more stacks and we're golden. 🌟 🏆",
-  "90%!!! 🚀 🎆 Total legends. The finish line is literally right there!",
-  "100%!!! 🎊 🥂 We did it! We are the ultimate power couple. What's next? 💍 🏡"
+  "Starting our romantic journey together! Let's build our dreams. ❤️ ✨",
+  "10% reached! Every small step is a beautiful milestone for us. 👣 🌹",
+  "20%! Our love and our savings are growing together. Keep it up! 📈 💞",
+  "30%! We're building a foundation of love and security. 🥂 🍩",
+  "40%! Our future is looking so bright and beautiful together. 😏 ✨",
+  "Halfway there! 🥳 🌈 We are the ultimate romantic power couple!",
+  "60%! The momentum of our love is unstoppable. 💃 🕺",
+  "70%! Almost there, my love! Can you feel our dreams coming true? 👃 💸",
+  "80%! Just a few more stacks of love and we've reached our goal. 🌟 🏆",
+  "90%!!! 🚀 🎆 We're nearly there! Our future is waiting for us.",
+  "100%!!! 🎊 🥂 We did it together! Our love wins, always. 💍 🏡"
 ];

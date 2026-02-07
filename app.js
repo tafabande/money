@@ -92,6 +92,13 @@ const goalSelect = document.getElementById("goal-select");
 const whoInput = document.getElementById("who-input");
 const whenInput = document.getElementById("when-input");
 
+// Check if celebrate exists before using it
+const showCelebration = () => {
+  if (celebrate) {
+    celebrate.classList.add("active");
+  }
+};
+
 // Set default date to today
 if (whenInput) {
   whenInput.valueAsDate = new Date();
@@ -148,25 +155,26 @@ const updateFooterStats = () => {
 
 const updateTotals = () => {
   const total = goals.reduce((sum, goal) => sum + goal.saved, 0);
-  totalBalance.textContent = formatMoney(total);
+  if (totalBalance) totalBalance.textContent = formatMoney(total);
   updateSassyComment(total);
   updateFooterStats();
 };
 
 const renderGoals = () => {
-  goalList.innerHTML = "";
-  goalSelect.innerHTML = '<option value="" disabled>Select a goal</option>';
+  if (goalList) goalList.innerHTML = "";
+  if (goalSelect) {
+    const currentValue = goalSelect.value;
+    goalSelect.innerHTML = '<option value="" disabled selected>Select a goal</option>';
+    goals.forEach(goal => {
+      const option = document.createElement("option");
+      option.value = goal.name;
+      option.textContent = goal.name;
+      goalSelect.appendChild(option);
+    });
+    if (currentValue) goalSelect.value = currentValue;
+  }
 
   goals.forEach((goal) => {
-    // Populate select
-    const option = document.createElement("option");
-    option.value = goal.name;
-    option.textContent = goal.name;
-    if (goal.name === "maroro") {
-      option.selected = true;
-    }
-    goalSelect.appendChild(option);
-
     // Render card
     const progress = goal.target > 0 ? Math.min((goal.saved / goal.target) * 100, 100) : 0;
     const card = document.createElement("div");
@@ -189,17 +197,17 @@ const renderGoals = () => {
       </div>
       ${completionUI}
     `;
-    goalList.appendChild(card);
+    if (goalList) goalList.appendChild(card);
 
     if (progress >= 90) {
-      celebrate.classList.add("active");
+      showCelebration();
     }
   });
   renderGraphs();
 };
 
 const renderActivity = () => {
-  activityFeed.innerHTML = "";
+  if (activityFeed) activityFeed.innerHTML = "";
   activities.forEach((activity) => {
     const item = document.createElement("div");
     item.className = "activity-item";
@@ -210,7 +218,7 @@ const renderActivity = () => {
       <span>${prefix} <strong>${activity.partner}</strong> ${activity.amount < 0 ? 'spent' : 'added'} ${formatMoney(Math.abs(activity.amount))} for ${activity.goal}</span>
       <span class="muted" style="font-size: 0.8rem;">${dateStr} - ${activity.note || "Saving contribution"}</span>
     `;
-    activityFeed.appendChild(item);
+    if (activityFeed) activityFeed.appendChild(item);
   });
 };
 
@@ -386,31 +394,50 @@ const syncData = () => {
 const initTypeIt = () => {
   if (typeof TypeIt === "undefined") return;
 
-  // Hero Title
-  const titleEl = document.getElementById("hero-title");
-  if (titleEl) {
-    new TypeIt("#hero-title", {
-      speed: 100,
-      startDelay: 500,
-      waitUntilVisible: true
-    })
-    .empty()
-    .type("Couple Goals Vault ✨")
-    .go();
-  }
+  const typeConfig = (speed = 50, delay = 0) => ({
+    speed,
+    startDelay: delay,
+    waitUntilVisible: true,
+    cursor: false
+  });
 
-  // Subhead
-  const subheadEl = document.querySelector(".subhead");
-  if (subheadEl) {
-    const originalText = subheadEl.textContent;
-    subheadEl.textContent = "";
-    new TypeIt(".subhead", {
-      strings: originalText,
-      speed: 20,
-      startDelay: 1500,
-      waitUntilVisible: true
-    }).go();
-  }
+  const elementsToType = [
+    { id: "#name-taah", speed: 100, delay: 100 },
+    { id: "#name-panah", speed: 100, delay: 500 },
+    { id: "#centerpiece-sub", speed: 40, delay: 1200 },
+    { id: "#hero-eyebrow", speed: 40, delay: 1800 },
+    { id: "#hero-title", speed: 80, delay: 2400 },
+    { id: "#hero-subhead", speed: 20, delay: 3200 },
+    { id: "#label-progress", speed: 50, delay: 3800 },
+    { id: "#label-progress-sub", speed: 30, delay: 4100 },
+    { id: "#label-deposit", speed: 50, delay: 4400 },
+    { id: "#label-deposit-sub", speed: 30, delay: 4700 },
+    { id: "#label-garden", speed: 50, delay: 5000 },
+    { id: "#label-garden-sub", speed: 30, delay: 5300 },
+    { id: "#label-money", speed: 40, delay: 5600 },
+    { id: "#label-goal", speed: 40, delay: 5800 },
+    { id: "#label-who", speed: 40, delay: 6000 },
+    { id: "#label-when", speed: 40, delay: 6200 },
+    { id: "#label-note", speed: 40, delay: 6400 },
+    { id: "#btn-deposit", speed: 60, delay: 6700 },
+    { id: "#label-add-goal", speed: 50, delay: 7000 },
+    { id: "#btn-add-goal", speed: 60, delay: 7200 },
+    { id: "#label-done", speed: 40, delay: 7400 },
+    { id: "#label-growing", speed: 40, delay: 7600 },
+    { id: "#label-stacker", speed: 40, delay: 7800 },
+  ];
+
+  elementsToType.forEach(item => {
+    const el = document.querySelector(item.id);
+    if (el) {
+      const text = el.innerText;
+      el.innerText = "";
+      new TypeIt(item.id, {
+        strings: text,
+        ...typeConfig(item.speed, item.delay)
+      }).go();
+    }
+  });
 
   // Footer Branding
   const footerTypeItEl = document.getElementById("footer-typeit");
@@ -426,7 +453,7 @@ const initTypeIt = () => {
       breakLines: false,
       loop: true,
       nextStringDelay: 3000,
-      startDelay: 2000,
+      startDelay: 7000,
       waitUntilVisible: true
     }).go();
   }
@@ -442,6 +469,25 @@ document.querySelectorAll(".tag").forEach((tag) => {
   });
 });
 
+const initHearts = () => {
+  const container = document.getElementById('hearts-container');
+  if (!container) return;
+
+  const icons = ['❤️', '💖', '🌹', '✨', '💕'];
+  
+  for (let i = 0; i < 15; i++) {
+    const heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    heart.innerText = icons[Math.floor(Math.random() * icons.length)];
+    heart.style.left = Math.random() * 100 + '%';
+    heart.style.animationDelay = Math.random() * 10 + 's';
+    heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+    container.appendChild(heart);
+  }
+};
+
 syncData();
+renderGoals();
 updatePartnerTag();
 initTypeIt();
+initHearts();

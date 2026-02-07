@@ -20,15 +20,25 @@
       <span></span>
     </div>
     <div class="page">
+      <section class="centerpiece">
+        <div class="floating-hearts" id="hearts-container"></div>
+        <div class="romantic-names">
+          <span id="name-taah">Taah</span>
+          <span class="ampersand">&</span>
+          <span id="name-panah">Panah</span>
+        </div>
+        <p class="eyebrow" id="centerpiece-sub" style="margin-top: 10px;">Building our love, one coin at a time ❤️</p>
+      </section>
+
       <header class="hero">
         <div class="logo">
           <div class="heart"></div>
           <div class="sparkle"></div>
         </div>
         <div>
-          <p class="eyebrow">Together we stack dreamy coins ✨</p>
+          <p class="eyebrow" id="hero-eyebrow">Together we stack dreamy coins ✨</p>
           <h1 id="hero-title">Couple Goals</h1>
-          <p class="subhead">
+          <p class="subhead" id="hero-subhead">
             A playful, vibrant dashboard where both of us can see wins, set new
             goals, and compare how badly we are depositing money.
           </p>
@@ -46,8 +56,8 @@
 
       <section class="panel graph-section">
         <div class="panel-header">
-          <h3>📈 Progress Tracker</h3>
-          <p class="muted">Watch the lines climb to the top!</p>
+          <h3 id="label-progress">📈 Progress Tracker</h3>
+          <p class="muted" id="label-progress-sub">Watch the lines climb to the top!</p>
         </div>
         <!-- New: graph filters: toggles to show/hide goals on the chart -->
         <div id="graph-filters" class="graph-filters" aria-label="Graph filters"></div>
@@ -62,60 +72,62 @@
       <main>
         <section class="panel">
           <div class="panel-header">
-            <h3>💸 Make a deposit</h3>
-            <p class="muted">Add your contribution and watch the stash grow.</p>
+            <h3 id="label-deposit">💸 Make a deposit</h3>
+            <p class="muted" id="label-deposit-sub">Add your contribution and watch the stash grow.</p>
           </div>
           <form id="deposit-form">
             <div class="input-row">
-              <label>
+              <label id="label-money">
                 Money (USD)
                 <input type="number" step="1" name="amount" placeholder="e.g. 50" required />
               </label>
-              <label>
+              <label id="label-goal">
                 What it's for
                 <select name="goal" id="goal-select" required>
-                  <!-- Options will be populated by JS, maroro should be default -->
+                  <option value="" disabled selected>Select a goal</option>
                 </select>
               </label>
             </div>
             <div class="input-row">
-              <label>
+              <label id="label-who">
                 Who is putting it in
-                <input type="text" name="who" id="who-input" placeholder="Your name" required />
+                <input type="text" name="who" id="who-input" placeholder="e.g. Taah" required />
               </label>
-              <label>
+              <label id="label-when">
                 When
                 <input type="date" name="when" id="when-input" required />
               </label>
             </div>
-            <label>
-              Note (optional)
-              <input type="text" name="note" placeholder="What's this for?" />
-            </label>
-            <button type="submit" class="primary">Stack the Love ✨</button>
+            <div class="input-row">
+              <label id="label-note">
+                Note (optional)
+                <input type="text" name="note" placeholder="e.g. For our future home" />
+              </label>
+            </div>
+            <button type="submit" class="primary" id="btn-deposit">Stack the Love ✨</button>
           </form>
           <div class="activity" id="activity-feed"></div>
         </section>
 
         <section class="panel goals">
           <div class="panel-header">
-            <h3>🌸 Goal Garden</h3>
-            <p class="muted">Every goal blooms with tiny wins.</p>
+            <h3 id="label-garden">🌸 Goal Garden</h3>
+            <p class="muted" id="label-garden-sub">Every goal blooms with tiny wins.</p>
           </div>
           <div class="goal-list" id="goal-list"></div>
           <hr style="border: 0; border-top: 1px solid #eee2ff; margin: 10px 0;">
           <div class="add-goal">
-            <h4>➕ Add a new goal</h4>
+            <h4 id="label-add-goal">➕ Add a new goal</h4>
             <form id="goal-form" class="input-row" style="margin-top: 10px;">
-              <label>
+              <label id="label-new-name">
                 Goal Name
                 <input type="text" name="newGoalName" placeholder="e.g. Vacation" required />
               </label>
-              <label>
+              <label id="label-new-target">
                 Target (USD)
                 <input type="number" name="newGoalTarget" placeholder="1000" required />
               </label>
-              <button type="submit" class="primary" style="padding: 8px 12px; align-self: end; margin-bottom: 4px;">Add to Stash</button>
+              <button type="submit" class="primary" id="btn-add-goal" style="padding: 8px 12px; align-self: end; margin-bottom: 4px;">Add to Stash</button>
             </form>
           </div>
         </section>
@@ -128,21 +140,21 @@
               <span class="stat-icon">🏆</span>
               <div class="stat-info">
                 <h4 id="footer-goals-completed">0</h4>
-                <p>Goals Done</p>
+                <p id="label-done">Goals Done</p>
               </div>
             </div>
             <div class="stat-card">
               <span class="stat-icon">🌱</span>
               <div class="stat-info">
                 <h4 id="footer-goals-active">0</h4>
-                <p>Growing</p>
+                <p id="label-growing">Growing</p>
               </div>
             </div>
             <div class="stat-card">
               <span class="stat-icon">🤝</span>
               <div class="stat-info">
                 <h4 id="footer-top-contributor">-</h4>
-                <p>Top Stacker</p>
+                <p id="label-stacker">Top Stacker</p>
               </div>
             </div>
           </div>
